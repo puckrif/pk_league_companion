@@ -1,6 +1,7 @@
 # Pk's League Companion
 
-A Discord League of Legends companion bot
+A Discord League of Legends companion bot  
+! The bot is in french
 
 ## Features
 
