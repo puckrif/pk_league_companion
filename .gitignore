@@ -1,5 +1,8 @@
 # folders
 env/
+**/__pycache__
 
 # files
 .env
+discord_bot_token.txt
+discord.log
