@@ -3,10 +3,14 @@
 A Discord League of Legends companion bot  
 ! The bot is in french
 
-## Features
+## Commands
 
 - *rank <riot_id> : Gives riot_id's currents ranks (SoloQ/DuoQ and Flex)
 - *puck for a surprise
+- *add_player : to track players and saves their ranks
+- *remove_player : to delete tracked players
+- *saved_players : to show tracked players
+- *history : to show a player's ranks history
 
 ## Prerequisites
 
