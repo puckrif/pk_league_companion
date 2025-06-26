@@ -16,6 +16,9 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="*", intents=intents)
 
 
+player_rank.load_players()
+
+
 
 @bot.event
 async def on_ready():
@@ -48,14 +51,15 @@ async def add_player(ctx, riot_id):
             await ctx.send(f":x: Erreur account-v1 {valid['puuid_code']}")
         else :
             await ctx.send(f":x: Erreur league-v4 {valid['ranks_code']}")
-    for player in player_rank.Player.players:
-        if player.riot_id == riot_id :
-            await ctx.send(f"{riot_id} est déjà enrengistré/e !")
-            break
-    else :
-        player_rank.Player.add_player(player_rank.Player(riot_id))
-        player_rank.save_players()
-        await ctx.send(f"{riot_id} ajouté/e !")
+    else:
+        for player in player_rank.Player.players:
+            if player.riot_id == riot_id :
+                await ctx.send(f"{riot_id} est déjà enrengistré/e !")
+                break
+        else :
+            player_rank.Player.add_player(player_rank.Player(riot_id))
+            player_rank.save_players()
+            await ctx.send(f"{riot_id} ajouté/e !")
 
 @bot.command()
 async def remove_player(ctx, riot_id):
@@ -77,6 +81,12 @@ async def saved_players(ctx):
     for player in player_rank.Player.players:
         saved += f"- {player.riot_id}\n"
     await ctx.send(saved)
+
+@bot.command()
+async def clear_players(ctx):
+    player_rank.Player.players.clear()
+    player_rank.save_players()
+    await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
 
 @bot.command()
 async def history(ctx, riot_id):
