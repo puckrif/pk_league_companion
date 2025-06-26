@@ -90,14 +90,5 @@ async def history(ctx, riot_id):
     else :
         await ctx.send("Aucun joueur correspondant")
 
-@bot.command()
-async def dico(ctx, riot_id):
-    for player in player_rank.Player.players:
-        if player.riot_id == riot_id :
-            await ctx.send(player.dico().__str__())
-            break
-    else :
-        await ctx.send("Aucun joueur correspondant")
-
 
 bot.run(discord_bot_token, log_handler=handler)
