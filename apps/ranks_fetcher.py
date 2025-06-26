@@ -2,7 +2,7 @@ import os
 import datetime
 import dotenv
 import requests
-from apps import puuid_fetcher
+import puuid_fetcher
 
 dotenv.load_dotenv()
 riot_api_key = os.getenv("RIOT_API_KEY")
@@ -21,6 +21,48 @@ def get_ranks_raw(riot_id):
         return {"ranks": ranks, "puuid_code": puuid["puuid_code"], "ranks_code": ranks_raw.status_code}
     else :
         return {"ranks": None, "puuid_code": puuid["puuid_code"], "ranks_code": None}
+    
+
+def get_score(ranks):
+    score = 0
+
+    match ranks["rank"]:
+        case "I":
+            score += 300
+        case "II":
+            score += 200
+        case "III":
+            score += 100
+        case "IV":
+            score += 0
+        case None :
+            score += 0
+
+    match ranks["tier"]:
+        case "IRON":
+            score += 0
+        case "BRONZE":
+            score += 1000
+        case "SILVER":
+            score += 2000
+        case "GOLD":
+            score += 3000
+        case "PLATINIUM":
+            score += 4000
+        case "EMERALD":
+            score += 5000
+        case "DIAMOND":
+            score += 6000
+        case "MASTER":
+            score += 7000
+        case "GRANDMASTER":
+            score += 10000
+        case "CHALLENGER":
+            score += 20000
+
+    score += int(ranks["leaguePoints"])
+    return score
+
 
 def get_ranks(riot_id):
     response = get_ranks_raw(riot_id)
@@ -32,13 +74,15 @@ def get_ranks(riot_id):
                 "solo":{
                     "tier": None,
                     "rank": None,
-                    "leaguePoints": None
+                    "leaguePoints": None,
+                    "score": None
                 },
 
                 "flex":{
                     "tier": None,
                     "rank": None,
-                    "leaguePoints": None
+                    "leaguePoints": None,
+                    "score": None
                 }
             }
         
@@ -48,10 +92,14 @@ def get_ranks(riot_id):
                 ranks["solo"]["rank"] = queue["rank"]
                 ranks["solo"]["leaguePoints"] = queue["leaguePoints"]
 
+                ranks["solo"]["score"] = get_score(ranks["solo"])
+
             if queue["queueType"] == "RANKED_FLEX_SR":
                 ranks["flex"]["tier"] = queue["tier"]
                 ranks["flex"]["rank"] = queue["rank"]
                 ranks["flex"]["leaguePoints"] = queue["leaguePoints"]
+
+                ranks["flex"]["score"] = get_score(ranks["flex"])
     else :
         ranks = None
     return {"ranks": ranks, "puuid_code": response["puuid_code"], "ranks_code": response["ranks_code"]}
