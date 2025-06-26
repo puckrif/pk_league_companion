@@ -3,7 +3,7 @@ import dotenv
 import discord
 from discord.ext import commands
 import logging
-from apps import ranks_fetcher
+from apps import player_rank
 
 dotenv.load_dotenv()
 discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
@@ -31,23 +31,64 @@ async def puck(ctx):
 
 @bot.command()
 async def rank(ctx, riot_id):
-    ranks = ranks_fetcher.get_ranks(riot_id)
+    ranks = player_rank.get_ranks(riot_id)
     if ranks["ranks"] == None:
         if ranks["puuid_code"] != None:
             await ctx.send(f":x: Erreur account-v1 {ranks['puuid_code']}")
         else :
             await ctx.send(f":x: Erreur league-v4 {ranks['ranks_code']}")
     else :
-        if ranks['ranks']['solo']['tier'] != None :
-            solo = f"En SoloQ/DuoQ {riot_id} est {ranks['ranks']['solo']['tier']} {ranks['ranks']['solo']['rank']} avec {ranks['ranks']['solo']['leaguePoints']} LP"
-            await ctx.send(solo)
-        if ranks['ranks']['flex']['tier'] != None :
-            flex = f"En Flex {riot_id} est {ranks['ranks']['flex']['tier']} {ranks['ranks']['flex']['rank']} avec {ranks['ranks']['flex']['leaguePoints']} LP"
-            await ctx.send(flex)
-        if ranks['ranks']['solo']['tier'] == None and ranks['ranks']['flex']['tier'] == None:
-            await ctx.send(":warning: Pas de rangs disponible")
+        await ctx.send(ranks["ranks"].__str__())
 
+@bot.command()
+async def add_player(ctx, riot_id):
+    valid = player_rank.get_ranks(riot_id)
+    if valid["ranks"] == None:
+        if valid["puuid_code"] != None:
+            await ctx.send(f":x: Erreur account-v1 {valid['puuid_code']}")
+        else :
+            await ctx.send(f":x: Erreur league-v4 {valid['ranks_code']}")
+    for player in player_rank.Player.players:
+        if player.riot_id == riot_id :
+            await ctx.send(f"{riot_id} est déjà enrengistré/e !")
+            break
+    else :
+        player_rank.Player.add_player(player_rank.Player(riot_id))
+        player_rank.save_players()
+        await ctx.send(f"{riot_id} ajouté/e !")
 
+@bot.command()
+async def remove_player(ctx, riot_id):
+    for player in player_rank.Player.players:
+        if player.riot_id == riot_id :
+            player_rank.Player.players.remove(player)
+            player_rank.save_players()
+            await ctx.send(f"{riot_id} retiré/e !")
+            break
+    else :
+        await ctx.send("Aucun joueur correspondant")
+
+@bot.command()
+async def saved_players(ctx):
+    if not player_rank.Player.players:
+        await ctx.send("Aucun joueur enregistré.")
+        return
+    saved = "**Joueurs enregistrés :**\n"
+    for player in player_rank.Player.players:
+        saved += f"- {player.riot_id}\n"
+    await ctx.send(saved)
+
+@bot.command()
+async def history(ctx, riot_id):
+    for player in player_rank.Player.players:
+        if player.riot_id == riot_id :
+            history = "**Historique :**\n\n"
+            for ranks in player.player_ranks:
+                history += f"{ranks.__str__()}\n--------------\n"
+            await ctx.send(history)
+            break
+    else :
+        await ctx.send("Aucun joueur correspondant")
 
 
 bot.run(discord_bot_token, log_handler=handler)
