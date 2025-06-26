@@ -2,6 +2,7 @@ import os
 import datetime
 import dotenv
 import requests
+import json
 
 from apps import puuid_fetcher
 # import puuid_fetcher
@@ -16,12 +17,28 @@ class Player():
     def __init__(self, riot_id):
         self.riot_id = riot_id
         self.player_ranks = []
+
+    def dico(self):
+        player_ranks_dico = []
+        for player_rank in self.player_ranks:
+            player_ranks_dico.append(player_rank.dico())
+        return {
+            "riot_id": self.riot_id,
+            "player_ranks": player_ranks_dico
+        }
     
     players = []
 
     @classmethod
     def add_player(cls, player):
         cls.players.append(player)
+    
+    @classmethod
+    def cls_dico(cls):
+        players_dico = []
+        for player in cls.players:
+            players_dico.append(player.dico())
+        return players_dico
 
 
 class PlayerRanks():
@@ -30,8 +47,15 @@ class PlayerRanks():
         self.solo = solo
         self.flex = flex
 
+    def dico(self):
+        return {
+            "date": self.date.__str__(),
+            "solo": self.solo.dico() if self.solo != None else None,
+            "flex": self.flex.dico() if self.flex != None else None
+        }
+
     def __str__(self):
-        result =  f"Le {self.date.__str__()}"
+        result =  f"Le *{self.date.__str__()}*"
         if self.solo != None :
             result += "\n" + self.solo.__str__()
         if self.flex != None :
@@ -49,11 +73,26 @@ class Rank():
         self.rank = rank
         self.lp = lp
 
+    def dico(self):
+        return {
+            "queue": self.queue_type,
+            "tier": self.tier,
+            "rank": self.rank,
+            "lp": self.lp
+        }
+
     def __str__(self):
         if self.rank != None :
             return f"En {self.queue_type}, {self.tier} {self.rank} avec {self.lp} LP "
         else :
             return f"En {self.queue_type}, {self.tier} avec {self.lp} LP "
+
+
+
+def save_players():
+    with open("players.json", "w") as file :
+        json.dump(Player.cls_dico(), file)
+
 
 
 def get_ranks_raw(riot_id):
@@ -130,6 +169,10 @@ def get_ranks(riot_id):
                     rank = None
                 flex = Rank(queue_type="Flex", tier=queue["tier"], lp=queue["leaguePoints"], rank=rank)
             ranks = PlayerRanks(solo=solo, flex=flex)
+        for player in Player.players:
+            if player.riot_id == riot_id :
+                player.player_ranks = [ranks] + player.player_ranks
+                save_players()
     else :
         ranks = None
     return {"ranks": ranks, "puuid_code": response["puuid_code"], "ranks_code": response["ranks_code"]}
