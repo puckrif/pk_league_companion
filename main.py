@@ -3,7 +3,7 @@ import dotenv
 import discord
 from discord.ext import commands
 import logging
-from apps import ranks_fetcher
+from apps import player_rank
 
 dotenv.load_dotenv()
 discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
@@ -31,22 +31,14 @@ async def puck(ctx):
 
 @bot.command()
 async def rank(ctx, riot_id):
-    ranks = ranks_fetcher.get_ranks(riot_id)
+    ranks = player_rank.get_ranks(riot_id)
     if ranks["ranks"] == None:
         if ranks["puuid_code"] != None:
             await ctx.send(f":x: Erreur account-v1 {ranks['puuid_code']}")
         else :
             await ctx.send(f":x: Erreur league-v4 {ranks['ranks_code']}")
     else :
-        if ranks['ranks']['solo']['tier'] != None :
-            solo = f"En SoloQ/DuoQ {riot_id} est {ranks['ranks']['solo']['tier']} {ranks['ranks']['solo']['rank']} avec {ranks['ranks']['solo']['leaguePoints']} LP"
-            await ctx.send(solo)
-        if ranks['ranks']['flex']['tier'] != None :
-            flex = f"En Flex {riot_id} est {ranks['ranks']['flex']['tier']} {ranks['ranks']['flex']['rank']} avec {ranks['ranks']['flex']['leaguePoints']} LP"
-            await ctx.send(flex)
-        if ranks['ranks']['solo']['tier'] == None and ranks['ranks']['flex']['tier'] == None:
-            await ctx.send(":warning: Pas de rangs disponible")
-
+        await ctx.send(ranks["ranks"].__str__())
 
 
 
