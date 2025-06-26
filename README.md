@@ -7,10 +7,11 @@ A Discord League of Legends companion bot
 
 - *rank <riot_id> : Gives riot_id's currents ranks (SoloQ/DuoQ and Flex)
 - *puck for a surprise
-- *add_player : to track players and saves their ranks
-- *remove_player : to delete tracked players
+- *add_player <riot_id> : to track players and saves their ranks
+- *remove_player <riot_id> : to delete a tracked players
 - *saved_players : to show tracked players
-- *history : to show a player's ranks history
+- *clear_players : clears all saved players
+- *history <riot_id> : to show a player's ranks history
 
 ## Prerequisites
 
