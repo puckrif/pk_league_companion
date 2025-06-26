@@ -18,6 +18,9 @@ class Player():
         self.riot_id = riot_id
         self.player_ranks = []
 
+    def add_ranks(self, player_rank):
+        self.player_ranks = [player_rank] + self.player_ranks
+
     def dico(self):
         player_ranks_dico = []
         for player_rank in self.player_ranks:
@@ -42,14 +45,14 @@ class Player():
 
 
 class PlayerRanks():
-    def __init__(self, solo=None, flex=None):
-        self.date = datetime.datetime.now()
+    def __init__(self, date, solo=None, flex=None):
+        self.date = date
         self.solo = solo
         self.flex = flex
 
     def dico(self):
         return {
-            "date": self.date.__str__(),
+            "date": self.date.strftime("%d-%m-%Y %H:%M"),
             "solo": self.solo.dico() if self.solo != None else None,
             "flex": self.flex.dico() if self.flex != None else None
         }
@@ -92,6 +95,32 @@ class Rank():
 def save_players():
     with open("players.json", "w") as file :
         json.dump(Player.cls_dico(), file)
+
+def load_players():
+    with open("players.json", "r") as file :
+        try :
+            players_dico = json.load(file)
+        except :
+            return
+        for player_dico in players_dico :
+            player = Player(player_dico["riot_id"])
+            for player_rank in player_dico["player_ranks"]:
+                date = datetime.datetime.strptime(player_rank["date"], "%d-%m-%Y %H:%M")
+                solo = None
+                flex = None
+                if player_rank["solo"] != None:
+                    if player_rank["solo"]["rank"] != None :
+                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], player_rank["solo"]["lp"], rank=player_rank["solo"]["rank"])
+                    else :
+                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], player_rank["solo"]["lp"])
+                if player_rank["flex"] != None:
+                    if player_rank["flex"]["rank"] != None :
+                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], player_rank["flex"]["lp"], rank=player_rank["flex"]["rank"])
+                    else :
+                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], player_rank["flex"]["lp"])
+                ranks = PlayerRanks(date, solo, flex)
+                player.add_ranks(ranks)
+            Player.add_player(player)
 
 
 
@@ -168,10 +197,10 @@ def get_ranks(riot_id):
                 except :
                     rank = None
                 flex = Rank(queue_type="Flex", tier=queue["tier"], lp=queue["leaguePoints"], rank=rank)
-            ranks = PlayerRanks(solo=solo, flex=flex)
+            ranks = PlayerRanks(date =datetime.datetime.now(), solo=solo, flex=flex)
         for player in Player.players:
             if player.riot_id == riot_id :
-                player.player_ranks = [ranks] + player.player_ranks
+                player.add_ranks(ranks)
                 save_players()
     else :
         ranks = None
