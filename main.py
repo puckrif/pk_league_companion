@@ -44,7 +44,7 @@ async def rank(ctx, riot_id):
         await ctx.send(ranks["ranks"].__str__())
 
 @bot.command()
-async def add_player(ctx, riot_id):
+async def add(ctx, riot_id):
     valid = player_rank.get_ranks(riot_id)
     if valid["ranks"] == None:
         if valid["puuid_code"] != None:
@@ -62,7 +62,7 @@ async def add_player(ctx, riot_id):
             await ctx.send(f"{riot_id} ajouté/e !")
 
 @bot.command()
-async def remove_player(ctx, riot_id):
+async def remove(ctx, riot_id):
     for player in player_rank.Player.players:
         if player.riot_id == riot_id :
             player_rank.Player.players.remove(player)
@@ -73,7 +73,7 @@ async def remove_player(ctx, riot_id):
         await ctx.send("Aucun joueur correspondant")
 
 @bot.command()
-async def saved_players(ctx):
+async def saved(ctx):
     if not player_rank.Player.players:
         await ctx.send("Aucun joueur enregistré.")
         return
@@ -83,7 +83,7 @@ async def saved_players(ctx):
     await ctx.send(saved)
 
 @bot.command()
-async def clear_players(ctx):
+async def clear(ctx):
     player_rank.Player.players.clear()
     player_rank.save_players()
     await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
