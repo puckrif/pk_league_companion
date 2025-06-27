@@ -44,6 +44,15 @@ async def puck(ctx):
 
 @bot.command()
 async def rank(ctx, riot_id):
+    old_solo_score = 0
+    old_flex_score = 0
+    for player in player_rank.Player.players:
+        if player.riot_id == riot_id:
+            if player.player_ranks != []:
+                if player.player_ranks[0].solo != None:
+                    old_solo_score = player.player_ranks[0].solo.score
+                if player.player_ranks[0].flex != None:
+                    old_flex_score = player.player_ranks[0].flex.score
     ranks = player_rank.get_ranks(riot_id)
     if ranks["ranks"] == None:
         if ranks["puuid_code"] != None:
@@ -55,9 +64,17 @@ async def rank(ctx, riot_id):
     else :
         if ranks["ranks"].solo != None:
             embed = rank_embed(riot_id, ranks["ranks"].solo)
+            if ranks["ranks"].solo.score > old_solo_score:
+                embed[0].set_footer(text="Ça monte")
+            elif ranks["ranks"].solo.score < old_solo_score:
+                embed[0].set_footer(text="En baisse")
             await ctx.send(embed=embed[0], file=embed[1])
         if ranks["ranks"].flex != None:
             embed = rank_embed(riot_id, ranks["ranks"].flex)
+            if ranks["ranks"].flex.score > old_flex_score:
+                embed[0].set_footer(text="Ça monte")
+            elif ranks["ranks"].flex.score < old_flex_score:
+                embed[0].set_footer(text="En baisse")
             await ctx.send(embed=embed[0], file=embed[1])
 
 @bot.command()
