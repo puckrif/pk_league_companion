@@ -102,8 +102,8 @@ async def on_ready():
         scheduler.shutdown()
     else:
         scheduler.remove_all_jobs()
-        # trigger = CronTrigger(day_of_week="sun", hour=10)
-        trigger = IntervalTrigger(seconds=30)
+        trigger = CronTrigger(day_of_week="sun", hour=10)
+        # trigger = IntervalTrigger(seconds=30) # for testing purpose
         loop = asyncio.get_event_loop()
         scheduler.add_job(lambda: loop.create_task(show_all_ranks_all_channels()), trigger=trigger)
         scheduler.start()
