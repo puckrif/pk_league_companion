@@ -1,13 +1,20 @@
 import os
 import dotenv
+import json
 import asyncio
 import discord
 from discord.ext import commands
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 import logging
+import datetime
 from apps import player_rank
 
 dotenv.load_dotenv()
 discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
+
+scheduler = AsyncIOScheduler()
 
 handler = logging.FileHandler(filename="discord.log", mode="w")
 
@@ -21,6 +28,30 @@ player_rank.load_players()
 
 
 
+def loads_channels():
+    with open("channels.json", "r") as file:
+        try:
+            data = json.load(file)
+        except:
+            data = []
+        return data
+
+saved_channels = loads_channels()
+
+def save_channels():
+    with open("channels.json", "w") as file:
+        json.dump(saved_channels, file)
+
+
+async def show_all_ranks_all_channels():
+    embed = discord.Embed(colour=discord.Color.green(), title=f"Weekly ranks {datetime.datetime.now().strftime('%d-%m-%Y')}")
+    for channel_id in saved_channels:
+        channel = discord.utils.get(bot.get_all_channels(), id=channel_id)
+        for player in player_rank.Player.players:
+            await channel.send(embed=embed)
+            await show_ranks(player.riot_id, channel_id)
+
+
 def rank_embed(riot_id, rank):
     embed = discord.Embed(title=riot_id, colour=discord.Color.blue())
     file = discord.File(f"img/ranks/{rank.tier.lower()}.png", filename=f"{rank.tier.lower()}.png")
@@ -28,22 +59,8 @@ def rank_embed(riot_id, rank):
     embed.add_field(name=rank.queue_type.capitalize(), value=rank.__str__(), inline=True)
     return (embed, file)
 
-
-
-@bot.event
-async def on_ready():
-    print(f"{bot.user} is ready !")
-
-
-@bot.command()
-async def puck(ctx):
-    file = discord.File("img/puck.gif", filename="puck.gif")
-    embed = discord.Embed(colour=discord.Colour.blue(), title="Le GOAT")
-    embed.set_image(url="attachment://puck.gif")
-    await ctx.send(embed=embed, file=file)
-
-@bot.command()
-async def rank(ctx, riot_id):
+async def show_ranks(riot_id, channel_id):
+    channel = discord.utils.get(bot.get_all_channels(), id=channel_id)
     old_solo_score = 0
     old_flex_score = 0
     for player in player_rank.Player.players:
@@ -56,26 +73,53 @@ async def rank(ctx, riot_id):
     ranks = player_rank.get_ranks(riot_id)
     if ranks["ranks"] == None:
         if ranks["puuid_code"] != None:
-            await ctx.send(f":x: Erreur account-v1 {ranks['puuid_code']}")
+            await channel.send(f":x: Erreur account-v1 {ranks['puuid_code']}")
         else :
-            await ctx.send(f":x: Erreur league-v4 {ranks['ranks_code']}")
+            await channel.send(f":x: Erreur league-v4 {ranks['ranks_code']}")
     elif ranks["ranks"] == "Vide":
-        await ctx.send(":no_mouth: Pas de rangs disponibles")
+        await channel.send(":no_mouth: Pas de rangs disponibles")
     else :
         if ranks["ranks"].solo != None:
             embed = rank_embed(riot_id, ranks["ranks"].solo)
             if ranks["ranks"].solo.score > old_solo_score:
-                embed[0].set_footer(text="Ça monte")
+                embed[0].set_footer(text="📈 Ça monte")
             elif ranks["ranks"].solo.score < old_solo_score:
-                embed[0].set_footer(text="En baisse")
-            await ctx.send(embed=embed[0], file=embed[1])
+                embed[0].set_footer(text="📉 En baisse")
+            await channel.send(embed=embed[0], file=embed[1])
         if ranks["ranks"].flex != None:
             embed = rank_embed(riot_id, ranks["ranks"].flex)
             if ranks["ranks"].flex.score > old_flex_score:
-                embed[0].set_footer(text="Ça monte")
+                embed[0].set_footer(text="📈 Ça monte")
             elif ranks["ranks"].flex.score < old_flex_score:
-                embed[0].set_footer(text="En baisse")
-            await ctx.send(embed=embed[0], file=embed[1])
+                embed[0].set_footer(text="📉 En baisse")
+            await channel.send(embed=embed[0], file=embed[1])
+
+
+@bot.event
+async def on_ready():
+    print(f"{bot.user} is ready !")
+    if scheduler.running:
+        scheduler.shutdown()
+    else:
+        scheduler.remove_all_jobs()
+        trigger = CronTrigger(day_of_week="sun", hour=10)
+        # trigger = IntervalTrigger(seconds=30) # for testing purpose
+        loop = asyncio.get_event_loop()
+        scheduler.add_job(lambda: loop.create_task(show_all_ranks_all_channels()), trigger=trigger)
+        scheduler.start()
+
+
+@bot.command()
+async def puck(ctx):
+    file = discord.File("img/puck.gif", filename="puck.gif")
+    embed = discord.Embed(colour=discord.Colour.blue(), title="Le GOAT")
+    embed.set_image(url="attachment://puck.gif")
+    await ctx.send(embed=embed, file=file)
+
+@bot.command()
+async def rank(ctx, riot_id):
+    channel_id = ctx.channel.id
+    await show_ranks(riot_id, channel_id)
 
 @bot.command()
 async def add(ctx, riot_id):
@@ -188,6 +232,26 @@ async def vs(ctx, queue, riot_id1, riot_id2):
             await ctx.send(f"*{riot_id1}* :\n{ranks1['ranks'].flex.__str__()}\n*{riot_id2}*:\n{ranks2['ranks'].flex.__str__()}\n:trophy: {riot_id2} solo !")
     else:
         await ctx.send(":x: mode de jeu incorrect")
+
+@bot.command()
+async def add_channel(ctx):
+    channel_id = ctx.channel.id
+    if channel_id in saved_channels :
+        await ctx.send(f"Ce channel est déjà enrengistré !")
+    else :
+        saved_channels.append(channel_id)
+        save_channels()
+        await ctx.send("Channel enrengistré !")
+
+@bot.command()
+async def remove_channel(ctx):
+    channel_id = ctx.channel.id
+    if channel_id in saved_channels :
+        saved_channels.remove(channel_id)
+        save_channels()
+        await ctx.send(f":put_litter_in_its_place: Channel supprimé !")
+    else :
+        await ctx.send(f":x: Ce channel n'est pas enrengistré !")
 
 
 bot.run(discord_bot_token, log_handler=handler)

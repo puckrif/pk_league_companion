@@ -6,4 +6,5 @@ env/
 .env
 discord_bot_token.txt
 players.json
+channels.json
 discord.log
