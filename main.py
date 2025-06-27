@@ -21,6 +21,33 @@ player_rank.load_players()
 
 
 
+def rank_embed(riot_id, rank):
+    embed = discord.Embed(title=riot_id, colour=discord.Color.blue())
+    file = None
+    match rank.tier:
+        case "IRON":
+            file = discord.File("img/ranks/iron.png", filename="iron.png")
+        case "BRONZE":
+            file = discord.File("img/ranks/bronze.png", filename="bronze.png")
+        case "SILVER":
+            file = discord.File("img/ranks/silver.png", filename="silver.png")
+        case "GOLD":
+            file = discord.File("img/ranks/gold.png", filename="gold.png")
+        case "PLATINIUM":
+            file = discord.File("img/ranks/platinium.png", filename="platinium.png")
+        case "EMERALD":
+            file = discord.File("img/ranks/emerald.png", filename="emerald.png")
+        case "DIAMOND":
+            file = discord.File("img/ranks/diamond.png", filename="diamond.png")
+        case "MASTER":
+            file = discord.File("img/ranks/master.png", filename="master.png")
+        case "GRANDMASTER":
+            file = discord.File("img/ranks/grandmaster.png", filename="grandmaster.png")
+        case "CHALLENGER":
+            file = discord.File("img/ranks/challenger.png", filename="challenger.png")
+
+
+
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready !")
@@ -121,15 +148,15 @@ async def vs(ctx, queue, riot_id1, riot_id2):
     ranks2 = player_rank.get_ranks(riot_id2)
 
     if queue == "solo":
-        if ranks1["ranks"].solo.score > ranks2["ranks"].solo :
-            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id1} solo !")
+        if ranks1["ranks"].solo.score > ranks2["ranks"].solo.score :
+            await ctx.send(f"*{riot_id1}* :\n{ranks1['ranks'].solo.__str__()}\n*{riot_id2}*:\n{ranks2['ranks'].solo.__str__()}\n:trophy: {riot_id1} solo !")
         else:
-            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id2} solo !")
+            await ctx.send(f"*{riot_id1}* :\n{ranks1['ranks'].solo.__str__()}\n*{riot_id2}*:\n{ranks2['ranks'].solo.__str__()}\n:trophy: {riot_id2} solo !")
     elif queue == "flex":
-        if ranks1["ranks"].flex.score > ranks2["ranks"].flex :
-            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id1} solo !")
+        if ranks1["ranks"].flex.score > ranks2["ranks"].flex.score :
+            await ctx.send(f"*{riot_id1}* :\n{ranks1['ranks'].flex.__str__()}\n*{riot_id2}*:\n{ranks2['ranks'].flex.__str__()}\n:trophy: {riot_id1} solo !")
         else:
-            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id2} solo !")
+            await ctx.send(f"*{riot_id1}* :\n{ranks1['ranks'].flex.__str__()}\n*{riot_id2}*:\n{ranks2['ranks'].flex.__str__()}\n:trophy: {riot_id2} solo !")
     else:
         await ctx.send(":x: mode de jeu incorrect")
 
