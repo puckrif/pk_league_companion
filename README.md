@@ -1,6 +1,7 @@
 # Pk's League Companion
 
-A Discord League of Legends companion bot  
+A Discord League of Legends companion bot 
+It's used to track player's rank every week and display it in a chosen channel
 ! The bot is in french
 
 ## Commands
@@ -13,6 +14,8 @@ A Discord League of Legends companion bot
 - *clear : clears all saved players
 - *history <riot_id> <nb> : to show a player's ranks history, nb is for choosing the max number of ranks to show (5 by default)
 - *vs <queue> <riot_id_1> <riot_id_2> : to compare two players ranks
+- *add_channel : to add a channel to the weekly ranks display
+- *remove_channel : to remove a channel
 
 ## Prerequisites
 
