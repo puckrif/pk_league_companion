@@ -184,6 +184,9 @@ def get_ranks(riot_id):
     response = get_ranks_raw(riot_id)
     if response["ranks"] != None:
         ranks_raw = response["ranks"]
+        ranks = None
+        if response["puuid_code"] == 200 and response["ranks_code"] == 200:
+            ranks = "Vide"
         solo = None
         flex = None
         for queue in ranks_raw:
