@@ -11,7 +11,7 @@ A Discord League of Legends companion bot
 - *remove <riot_id> : to delete a tracked players
 - *saved : to show tracked players
 - *clear : clears all saved players
-- *history <riot_id> : to show a player's ranks history
+- *history <riot_id> [<nb>] : to show a player's ranks history, nb is for choosing the max number of ranks to show (5 by default)
 - *vs <queue> <riot_id_1> <riot_id_2> : to compare two players ranks
 
 ## Prerequisites
