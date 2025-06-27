@@ -1,5 +1,6 @@
 import os
 import dotenv
+import asyncio
 import discord
 from discord.ext import commands
 import logging
@@ -44,7 +45,7 @@ async def rank(ctx, riot_id):
         await ctx.send(ranks["ranks"].__str__())
 
 @bot.command()
-async def add_player(ctx, riot_id):
+async def add(ctx, riot_id):
     valid = player_rank.get_ranks(riot_id)
     if valid["ranks"] == None:
         if valid["puuid_code"] != None:
@@ -62,7 +63,7 @@ async def add_player(ctx, riot_id):
             await ctx.send(f"{riot_id} ajouté/e !")
 
 @bot.command()
-async def remove_player(ctx, riot_id):
+async def remove(ctx, riot_id):
     for player in player_rank.Player.players:
         if player.riot_id == riot_id :
             player_rank.Player.players.remove(player)
@@ -73,7 +74,7 @@ async def remove_player(ctx, riot_id):
         await ctx.send("Aucun joueur correspondant")
 
 @bot.command()
-async def saved_players(ctx):
+async def saved(ctx):
     if not player_rank.Player.players:
         await ctx.send("Aucun joueur enregistré.")
         return
@@ -83,10 +84,24 @@ async def saved_players(ctx):
     await ctx.send(saved)
 
 @bot.command()
-async def clear_players(ctx):
-    player_rank.Player.players.clear()
-    player_rank.save_players()
-    await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
+async def clear(ctx):
+    await ctx.send("⚠️ Es-tu sûr de vouloir supprimer tous les joueurs ? (y/n)")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() in ["y", "n"]
+
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=15)
+    except asyncio.TimeoutError:
+        await ctx.send("⏰ Temps écoulé, opération annulée.")
+        return
+
+    if msg.content.lower() == "y":
+        player_rank.Player.players.clear()
+        player_rank.save_players()
+        await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
+    else:
+        await ctx.send("Opération annulée.")
 
 @bot.command()
 async def history(ctx, riot_id):
@@ -99,6 +114,24 @@ async def history(ctx, riot_id):
             break
     else :
         await ctx.send("Aucun joueur correspondant")
+
+@bot.command()
+async def vs(ctx, queue, riot_id1, riot_id2):
+    ranks1 = player_rank.get_ranks(riot_id1)
+    ranks2 = player_rank.get_ranks(riot_id2)
+
+    if queue == "solo":
+        if ranks1["ranks"].solo.score > ranks2["ranks"].solo :
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id1} solo !")
+        else:
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id2} solo !")
+    elif queue == "flex":
+        if ranks1["ranks"].flex.score > ranks2["ranks"].flex :
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id1} solo !")
+        else:
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id2} solo !")
+    else:
+        await ctx.send(":x: mode de jeu incorrect")
 
 
 bot.run(discord_bot_token, log_handler=handler)

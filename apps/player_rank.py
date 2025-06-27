@@ -75,13 +75,15 @@ class Rank():
         self.tier = tier
         self.rank = rank
         self.lp = lp
+        self.score = get_score(self)
 
     def dico(self):
         return {
             "queue": self.queue_type,
             "tier": self.tier,
             "rank": self.rank,
-            "lp": self.lp
+            "lp": self.lp,
+            "score": self.score
         }
 
     def __str__(self):
@@ -110,14 +112,14 @@ def load_players():
                 flex = None
                 if player_rank["solo"] != None:
                     if player_rank["solo"]["rank"] != None :
-                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], player_rank["solo"]["lp"], rank=player_rank["solo"]["rank"])
+                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], int(player_rank["solo"]["lp"]), rank=player_rank["solo"]["rank"])
                     else :
-                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], player_rank["solo"]["lp"])
+                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], int(player_rank["solo"]["lp"]))
                 if player_rank["flex"] != None:
                     if player_rank["flex"]["rank"] != None :
-                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], player_rank["flex"]["lp"], rank=player_rank["flex"]["rank"])
+                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], int(player_rank["flex"]["lp"]), rank=player_rank["flex"]["rank"])
                     else :
-                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], player_rank["flex"]["lp"])
+                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], int(player_rank["flex"]["lp"]))
                 ranks = PlayerRanks(date, solo, flex)
                 player.add_ranks(ranks)
             Player.add_player(player)
@@ -137,10 +139,10 @@ def get_ranks_raw(riot_id):
         return {"ranks": None, "puuid_code": puuid["puuid_code"], "ranks_code": None}
     
 
-def get_score(ranks):
+def get_score(rank):
     score = 0
 
-    match ranks["rank"]:
+    match rank.rank:
         case "I":
             score += 300
         case "II":
@@ -152,7 +154,7 @@ def get_score(ranks):
         case None :
             score += 0
 
-    match ranks["tier"]:
+    match rank.tier:
         case "IRON":
             score += 0
         case "BRONZE":
@@ -174,7 +176,7 @@ def get_score(ranks):
         case "CHALLENGER":
             score += 20000
 
-    score += int(ranks["leaguePoints"])
+    score += rank.lp
     return score
 
 
@@ -190,13 +192,13 @@ def get_ranks(riot_id):
                     rank = queue["rank"]
                 except :
                     rank = None
-                solo = Rank(queue_type="Solo", tier=queue["tier"], lp=queue["leaguePoints"], rank=rank)
+                solo = Rank(queue_type="Solo", tier=queue["tier"], lp=int(queue["leaguePoints"]), rank=rank)
             if queue["queueType"] == "RANKED_FLEX_SR":
                 try :
                     rank = queue["rank"]
                 except :
                     rank = None
-                flex = Rank(queue_type="Flex", tier=queue["tier"], lp=queue["leaguePoints"], rank=rank)
+                flex = Rank(queue_type="Flex", tier=queue["tier"], lp=int(queue["leaguePoints"]), rank=rank)
             ranks = PlayerRanks(date =datetime.datetime.now(), solo=solo, flex=flex)
         for player in Player.players:
             if player.riot_id == riot_id :
