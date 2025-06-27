@@ -1,5 +1,6 @@
 import os
 import dotenv
+import asyncio
 import discord
 from discord.ext import commands
 import logging
@@ -84,9 +85,23 @@ async def saved(ctx):
 
 @bot.command()
 async def clear(ctx):
-    player_rank.Player.players.clear()
-    player_rank.save_players()
-    await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
+    await ctx.send("⚠️ Es-tu sûr de vouloir supprimer tous les joueurs ? (y/n)")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() in ["y", "n"]
+
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=15)
+    except asyncio.TimeoutError:
+        await ctx.send("⏰ Temps écoulé, opération annulée.")
+        return
+
+    if msg.content.lower() == "y":
+        player_rank.Player.players.clear()
+        player_rank.save_players()
+        await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
+    else:
+        await ctx.send("Opération annulée.")
 
 @bot.command()
 async def history(ctx, riot_id):
