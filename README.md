@@ -12,6 +12,7 @@ A Discord League of Legends companion bot
 - *saved : to show tracked players
 - *clear : clears all saved players
 - *history <riot_id> : to show a player's ranks history
+- *vs <queue> <riot_id_1> <riot_id_2> : to compare two players ranks
 
 ## Prerequisites
 

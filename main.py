@@ -115,5 +115,23 @@ async def history(ctx, riot_id):
     else :
         await ctx.send("Aucun joueur correspondant")
 
+@bot.command()
+async def vs(ctx, queue, riot_id1, riot_id2):
+    ranks1 = player_rank.get_ranks(riot_id1)
+    ranks2 = player_rank.get_ranks(riot_id2)
+
+    if queue == "solo":
+        if ranks1["ranks"].solo.score > ranks2["ranks"].solo :
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id1} solo !")
+        else:
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].solo.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].solo.__str__()}\n:trophy: {riot_id2} solo !")
+    elif queue == "flex":
+        if ranks1["ranks"].flex.score > ranks2["ranks"].flex :
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id1} solo !")
+        else:
+            await ctx.send(f"*{riot_id1}*:\n{ranks1["ranks"].flex.__str__()}\n*{riot_id2}*:\n{ranks2["ranks"].flex.__str__()}\n:trophy: {riot_id2} solo !")
+    else:
+        await ctx.send(":x: mode de jeu incorrect")
+
 
 bot.run(discord_bot_token, log_handler=handler)
