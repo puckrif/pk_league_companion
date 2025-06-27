@@ -1,7 +1,7 @@
 # Pk's League Companion
 
-A Discord League of Legends companion bot 
-It's used to track player's rank every week and display it in a chosen channel
+A Discord League of Legends companion bot  
+It's used to track player's rank every week and display it in a chosen channel  
 ! The bot is in french
 
 ## Commands
