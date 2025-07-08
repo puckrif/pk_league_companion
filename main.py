@@ -10,6 +10,9 @@ from apscheduler.triggers.interval import IntervalTrigger
 import logging
 import datetime
 from apps import player_rank
+from apps import save_load
+
+
 
 dotenv.load_dotenv()
 discord_bot_token = os.getenv("DISCORD_BOT_TOKEN")
@@ -24,7 +27,7 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="*", intents=intents)
 
 
-player_rank.load_players()
+save_load.load_players()
 
 
 
@@ -43,6 +46,7 @@ def save_channels():
         json.dump(saved_channels, file)
 
 
+
 async def show_all_ranks_all_channels():
     embed = discord.Embed(colour=discord.Color.green(), title=f"Weekly ranks {datetime.datetime.now().strftime('%d-%m-%Y')}")
     for channel_id in saved_channels:
@@ -58,6 +62,7 @@ def rank_embed(riot_id, rank):
     embed.set_thumbnail(url=f"attachment://{rank.tier.lower()}.png")
     embed.add_field(name=rank.queue_type.capitalize(), value=rank.__str__(), inline=True)
     return (embed, file)
+
 
 async def show_ranks(riot_id, channel_id):
     channel = discord.utils.get(bot.get_all_channels(), id=channel_id)
@@ -76,9 +81,13 @@ async def show_ranks(riot_id, channel_id):
             await channel.send(f":x: Erreur account-v1 {ranks['puuid_code']}")
         else :
             await channel.send(f":x: Erreur league-v4 {ranks['ranks_code']}")
-    elif ranks["ranks"] == "Vide":
-        await channel.send(":no_mouth: Pas de rangs disponibles")
     else :
+        for player in player_rank.Player.players:
+            if player.riot_id == riot_id :
+                player.add_ranks(ranks['ranks'])
+                save_load.save_players()
+        if ranks["ranks"].solo == None and ranks["ranks"].flex == None:
+            await channel.send(":no_mouth: Pas de rangs disponibles")
         if ranks["ranks"].solo != None:
             embed = rank_embed(riot_id, ranks["ranks"].solo)
             if ranks["ranks"].solo.score > old_solo_score:
@@ -95,6 +104,7 @@ async def show_ranks(riot_id, channel_id):
             await channel.send(embed=embed[0], file=embed[1])
 
 
+
 @bot.event
 async def on_ready():
     print(f"{bot.user} is ready !")
@@ -107,6 +117,7 @@ async def on_ready():
         loop = asyncio.get_event_loop()
         scheduler.add_job(lambda: loop.create_task(show_all_ranks_all_channels()), trigger=trigger)
         scheduler.start()
+
 
 
 @bot.command()
@@ -136,7 +147,7 @@ async def add(ctx, riot_id):
                 break
         else :
             player_rank.Player.add_player(player_rank.Player(riot_id))
-            player_rank.save_players()
+            save_load.save_players()
             await ctx.send(f":o: {riot_id} ajouté/e !")
 
 @bot.command()
@@ -144,7 +155,7 @@ async def remove(ctx, riot_id):
     for player in player_rank.Player.players:
         if player.riot_id == riot_id :
             player_rank.Player.players.remove(player)
-            player_rank.save_players()
+            save_load.save_players()
             await ctx.send(f":wave: {riot_id} retiré/e !")
             break
     else :
@@ -175,7 +186,7 @@ async def clear(ctx):
 
     if msg.content.lower() == "y":
         player_rank.Player.players.clear()
-        player_rank.save_players()
+        save_load.save_players()
         await ctx.send(":put_litter_in_its_place: Tous les joueurs ont été supprimé/es !")
     else:
         await ctx.send("Opération annulée.")
