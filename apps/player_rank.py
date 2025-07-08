@@ -2,10 +2,8 @@ import os
 import datetime
 import dotenv
 import requests
-import json
-
 from apps import puuid_fetcher
-# import puuid_fetcher
+
 
 dotenv.load_dotenv()
 riot_api_key = os.getenv("RIOT_API_KEY")
@@ -97,38 +95,6 @@ class Rank():
 
 
 
-def save_players():
-    with open("players.json", "w") as file :
-        json.dump(Player.cls_dico(), file)
-
-def load_players():
-    with open("players.json", "r") as file :
-        try :
-            players_dico = json.load(file)
-        except :
-            return
-        for player_dico in players_dico :
-            player = Player(player_dico["riot_id"])
-            for player_rank in player_dico["player_ranks"]:
-                date = datetime.datetime.strptime(player_rank["date"], "%d-%m-%Y %H:%M:%S")
-                solo = None
-                flex = None
-                if player_rank["solo"] != None:
-                    if player_rank["solo"]["rank"] != None :
-                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], int(player_rank["solo"]["lp"]), rank=player_rank["solo"]["rank"], score=int(player_rank["solo"]["score"]))
-                    else :
-                        solo = Rank(player_rank["solo"]["queue"], player_rank["solo"]["tier"], int(player_rank["solo"]["lp"]), score=int(player_rank["solo"]["score"]))
-                if player_rank["flex"] != None:
-                    if player_rank["flex"]["rank"] != None :
-                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], int(player_rank["flex"]["lp"]), rank=player_rank["flex"]["rank"], score=int(player_rank["flex"]["score"]))
-                    else :
-                        flex = Rank(player_rank["flex"]["queue"], player_rank["flex"]["tier"], int(player_rank["flex"]["lp"]), score=int(player_rank["flex"]["score"]))
-                ranks = PlayerRanks(date, solo, flex)
-                player.add_ranks(ranks)
-            Player.add_player(player)
-
-
-
 def get_ranks_raw(riot_id):
     puuid = puuid_fetcher.get_puuid(riot_id)
     if puuid["puuid_code"] == 200:
@@ -185,11 +151,9 @@ def get_score(rank):
 
 def get_ranks(riot_id):
     response = get_ranks_raw(riot_id)
+    ranks = None
     if response["ranks"] != None:
         ranks_raw = response["ranks"]
-        ranks = None
-        if response["puuid_code"] == 200 and response["ranks_code"] == 200:
-            ranks = "Vide"
         solo = None
         flex = None
         for queue in ranks_raw:
@@ -205,16 +169,10 @@ def get_ranks(riot_id):
                 except :
                     rank = None
                 flex = Rank(queue_type="Flex", tier=queue["tier"], lp=int(queue["leaguePoints"]), rank=rank)
-        ranks = PlayerRanks(date =datetime.datetime.now(), solo=solo, flex=flex)
-        for player in Player.players:
-            if player.riot_id == riot_id :
-                player.add_ranks(ranks)
-                save_players()
-    else :
-        ranks = None
+        ranks = PlayerRanks(date=datetime.datetime.now(), solo=solo, flex=flex)
     return {"ranks": ranks, "puuid_code": response["puuid_code"], "ranks_code": response["ranks_code"]}
 
 
 if __name__ == "__main__":
 
-    print(get_ranks("pkrf#728")["ranks"].__str__())
+    print(get_ranks("pkrf#728")['ranks'].__str__())
